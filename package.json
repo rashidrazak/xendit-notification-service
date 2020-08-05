@@ -1,0 +1,19 @@
+{
+  "name": "xendit-notification-service",
+  "version": "1.0.0",
+  "description": "Xendit Notification Service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/rashidrazak/xendit-notification-service.git"
+  },
+  "author": "Rashid Razak",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rashidrazak/xendit-notification-service/issues"
+  },
+  "homepage": "https://github.com/rashidrazak/xendit-notification-service#readme"
+}
