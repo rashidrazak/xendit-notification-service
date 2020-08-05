@@ -11,7 +11,25 @@
 #
 # Happy Coding!
 
-service: xendit-notification-service
+service: 
+  name: ${env:PROJECT_NAME}
+
+frameworkVersion: ">=1.60.0 <2.0.0"
+
+package:
+  individually: true
+  exclude:
+    - .git/** 
+    - .gitignore 
+    - tests/** 
+    - coverage/** 
+    - .DS_Store 
+    - .eslintrc.json 
+    - package-lock.json 
+    - package.json 
+
+plugins:
+  - serverless-dotenv-plugin
 # app and org for use with dashboard.serverless.com
 #app: your-app-name
 #org: your-org-name
@@ -23,6 +41,78 @@ service: xendit-notification-service
 provider:
   name: aws
   runtime: nodejs12.x
+  stage: ${opt:stage, "dev"}
+  region: ${opt:region, "ap-southeast-1"}
+  stackName: ${env:STACK_NAME}
+  profile: ${opt:profile, "personal"}
+  memorySize: ${env:MEMORY_SIZE, 256}
+  deploymentBucket: ${self:custom.deploymentBucket}
+  environment:
+    VERSION: 0.1.0
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.accountId}:table/${self:custom.ddbCounterTable}
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.accountId}:table/${self:custom.ddbCounterTable}/*
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.accountId}:table/${self:custom.ddbNotificationTable}
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.accountId}:table/${self:custom.ddbNotificationTable}/*
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource:
+        - arn:aws:logs:${self:provider.region}:${self:custom.accountId}:*
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource:
+        # - arn:aws:lambda:${self:provider.region}:${self:custom.accountId}:function:*
+        - 'arn:aws:lambda:${self:provider.region}:*:function:*'
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource:
+        - arn:aws:s3:::${self:custom.contentBucket}*
+
+custom:
+  account:
+    prod: ${env:AWS_ACCOUNT_ID_PROD}
+    preprod: ${env:AWS_ACCOUNT_ID_PREPROD}
+    staging: ${env:AWS_ACCOUNT_ID_STAGING}
+    dev: ${env:AWS_ACCOUNT_ID_DEV}
+  artifact:
+    prod: com.biborn.${self:provider.stage}-${env:PROJECT_NAME}-deployment
+    preprod: com.biborn.${self:provider.stage}-${env:PROJECT_NAME}-deployment
+    staging: com.biborn.${self:provider.stage}-${env:PROJECT_NAME}-deployment
+    dev: com.biborn.serverless
+  bucket:
+    prod: com.biborn.prod-content
+    preprod: com.biborn.preprod-content
+    staging: com.biborn.staging-content
+    dev: com.biborn.serverless
+  # esEndpoint:
+  #   prod:
+  #   preprod:
+  #   staging:
+  #   dev:
+
+  accountId: ${self:custom.account.${opt:stage, self:provider.stage}}
+  contentBucket: ${self:custom.bucket.${opt:stage, self:provider.stage}}
+  deploymentBucket: ${self:custom.artifact.${opt:stage, self:provider.stage}}
+  bibornESDomainIndex: biborn-es-domain-${opt:stage, self:provider.stage}
+
+  serviceName: Xendit
+
+  ddbCounterTable: ${self:custom.serviceName}-${self:provider.stage}-CounterTable
+  ddbNotificationTable: ${self:custom.serviceName}-${self:provider.stage}-NotificationTable
 
 # you can overwrite defaults here
 #  stage: dev
@@ -58,8 +148,12 @@ provider:
 #    - exclude-me-dir/**
 
 functions:
-  hello:
-    handler: handler.hello
+  createVerificationToken:
+    handler: src/apis/verification-token.create
+    events:
+      - http:
+          path: api/v1/verification_token
+          method: post
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details

@@ -1,0 +1,13 @@
+'use strict'
+
+const TypeName = {
+  MERCHANT: 'MERCHANT',
+  USER: 'USER',
+  VERIFICATION_TOKEN: 'VERIFICATION_TOKEN',
+  WEBHOOK_URL: 'WEBHOOK_URL',
+  NOTIFICATION_MSG: 'NOTIFICATION_MSG'
+}
+
+module.exports = {
+  TypeName
+}
